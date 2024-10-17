@@ -12,37 +12,29 @@ let players = [];
 // Function to fetch player salaries
 async function fetchPlayerSalaries() {
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'], // Required for Render
   });
   const page = await browser.newPage();
+  await page.goto('https://www.basketball-reference.com/contracts/players.html', { waitUntil: 'networkidle2', timeout: 60000 });
 
-  try {
-    await page.goto('https://www.basketball-reference.com/contracts/players.html', { waitUntil: 'networkidle2', timeout: 60000 });
-    await page.waitForSelector('table#player-contracts', { timeout: 60000 });
+  const players = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('table#player-contracts tbody tr'));
+    return rows.map(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 5) return null;
+      const name = cells[0].innerText.trim();
+      const team = cells[1].innerText.trim();
+      const salary2024 = cells[2].innerText.trim().replace(/\$|,/g, '');
+      return {
+        name: name,
+        team: team,
+        grossSalary: parseFloat(salary2024),
+      };
+    }).filter(player => player !== null);
+  });
 
-    const players = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('table#player-contracts tbody tr'));
-      return rows.map(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length < 5) return null; // Skip rows that don't have enough data
-        const name = cells[0].innerText.trim();
-        const team = cells[1].innerText.trim();
-        const salary2024 = cells[2].innerText.trim().replace(/\$|,/g, ''); // Remove both $ and ,
-        return {
-          name: name,
-          team: team,
-          grossSalary: parseFloat(salary2024),
-        };
-      }).filter(player => player !== null); // Filter out null values
-    });
-
-    await browser.close();
-    return players;
-  } catch (error) {
-    console.error("Error fetching player salaries:", error);
-    await browser.close();
-    throw error;
-  }
+  await browser.close();
+  return players;
 }
 
 // Function to periodically fetch player data

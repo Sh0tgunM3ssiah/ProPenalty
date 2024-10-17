@@ -30,7 +30,7 @@ async function scrapePlayers() {
 // Function to push data to the Render API
 async function pushDataToRender(players) {
   try {
-    const response = await axios.post('https://your-render-api.com/api/update-players', {
+    const response = await axios.post('https://propenalty-backend.onrender.com/api/update-players', {
       players: players,
     });
     console.log('Data pushed successfully:', response.data);
