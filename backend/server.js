@@ -88,6 +88,22 @@ app.post('/api/calculate', (req, res) => {
   res.json({ deductions, finePercentage });
 });
 
+app.post('/api/update-players', (req, res) => {
+  const { players } = req.body;
+  
+  if (!players || !Array.isArray(players)) {
+    return res.status(400).json({ error: 'Invalid player data' });
+  }
+
+  // Update the local players array with the new data
+  players.forEach(player => {
+    // Update or add player in your local array (implement logic as needed)
+  });
+
+  console.log('Received player data:', players);
+  res.json({ message: 'Player data updated successfully' });
+});
+
 // List of state tax rates by state abbreviation
 const stateTaxRates = {
   'GA': 0.0575,
