@@ -1,4 +1,8 @@
-node_modules
-.env.*
+# Ignore node_modules
+node_modules/
 
+# Ignore all .env files (e.g., .env, .env.local, .env.production)
+.env*
+
+# Ignore robots.txt
 robots.txt
