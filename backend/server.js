@@ -2,57 +2,27 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-let players = [];
+const playersFilePath = path.join(__dirname, 'players.json');
 
-// Function to fetch player salaries
-async function fetchPlayerSalaries() {
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'], // Required for Render
-  });
-  const page = await browser.newPage();
-  await page.goto('https://www.basketball-reference.com/contracts/players.html', { waitUntil: 'networkidle2', timeout: 60000 });
-
-  const players = await page.evaluate(() => {
-    const rows = Array.from(document.querySelectorAll('table#player-contracts tbody tr'));
-    return rows.map(row => {
-      const cells = row.querySelectorAll('td');
-      if (cells.length < 5) return null;
-      const name = cells[0].innerText.trim();
-      const team = cells[1].innerText.trim();
-      const salary2024 = cells[2].innerText.trim().replace(/\$|,/g, '');
-      return {
-        name: name,
-        team: team,
-        grossSalary: parseFloat(salary2024),
-      };
-    }).filter(player => player !== null);
-  });
-
-  await browser.close();
-  return players;
-}
-
-// Function to periodically fetch player data
-async function updatePlayerData() {
-  try {
-    players = await fetchPlayerSalaries();
-    console.log("Player data updated:", players);
-  } catch (error) {
-    console.error("Failed to update player data:", error);
+// Function to read player data from the JSON file
+function readPlayersFromFile() {
+  if (fs.existsSync(playersFilePath)) {
+    const data = fs.readFileSync(playersFilePath);
+    return JSON.parse(data);
   }
+  return [];
 }
-
-// Schedule scraping once every 24 hours
-setInterval(updatePlayerData, 24 * 60 * 60 * 1000); // Once a day
-updatePlayerData(); // Initial fetch
 
 // Endpoint to get all teams
 app.get('/api/teams', (req, res) => {
+  const players = readPlayersFromFile();
   if (players.length === 0) {
     return res.status(503).json({ error: "Data not ready. Please try again later." });
   }
@@ -63,6 +33,7 @@ app.get('/api/teams', (req, res) => {
 
 // Endpoint to get players by team
 app.get('/api/players/:team', (req, res) => {
+  const players = readPlayersFromFile();
   if (players.length === 0) {
     return res.status(503).json({ error: "Data not ready. Please try again later." });
   }
@@ -78,22 +49,6 @@ app.post('/api/calculate', (req, res) => {
   const deductions = calculateDeductions(grossSalary, taxRates);
   const finePercentage = calculateFinePercentage(fine, deductions['Net Income']);
   res.json({ deductions, finePercentage });
-});
-
-app.post('/api/update-players', (req, res) => {
-  const { players } = req.body;
-  
-  if (!players || !Array.isArray(players)) {
-    return res.status(400).json({ error: 'Invalid player data' });
-  }
-
-  // Update the local players array with the new data
-  players.forEach(player => {
-    // Update or add player in your local array (implement logic as needed)
-  });
-
-  console.log('Received player data:', players);
-  res.json({ message: 'Player data updated successfully' });
 });
 
 // List of state tax rates by state abbreviation

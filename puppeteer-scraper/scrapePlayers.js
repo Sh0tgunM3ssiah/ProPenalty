@@ -1,11 +1,14 @@
 const puppeteer = require('puppeteer');
-const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 // Function to scrape player data
 async function scrapePlayers() {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox'], // Required for environments like Render
+  });
   const page = await browser.newPage();
-  await page.goto('https://www.basketball-reference.com/contracts/players.html', { waitUntil: 'networkidle2' });
+  await page.goto('https://www.basketball-reference.com/contracts/players.html', { waitUntil: 'networkidle2', timeout: 60000 });
 
   const players = await page.evaluate(() => {
     const rows = Array.from(document.querySelectorAll('table#player-contracts tbody tr'));
@@ -27,23 +30,15 @@ async function scrapePlayers() {
   return players;
 }
 
-// Function to push data to the Render API
-async function pushDataToRender(players) {
-  try {
-    const response = await axios.post('https://propenalty-backend.onrender.com/api/update-players', {
-      players: players,
-    });
-    console.log('Data pushed successfully:', response.data);
-  } catch (error) {
-    console.error('Error pushing data to Render:', error);
-  }
+// Save scraped players to the JSON file in the backend folder
+function savePlayersToFile(players) {
+  const filePath = path.join(__dirname, '../backend/players.json'); // Path to backend folder
+  fs.writeFileSync(filePath, JSON.stringify(players, null, 2));
+  console.log('Player data saved to backend/players.json');
 }
 
-// Main function to run the scraper and push the data
+// Main function to run the scraper and save the data
 (async () => {
   const players = await scrapePlayers();
-  console.log('Scraped players:', players);
-
-  // Push data to Render backend
-  await pushDataToRender(players);
+  savePlayersToFile(players);  // Save data to JSON file in backend folder
 })();
