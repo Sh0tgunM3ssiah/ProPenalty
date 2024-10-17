@@ -11,7 +11,9 @@ let players = [];
 
 // Function to fetch player salaries
 async function fetchPlayerSalaries() {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   const page = await browser.newPage();
 
   try {
