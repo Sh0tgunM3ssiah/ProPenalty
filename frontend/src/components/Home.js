@@ -11,6 +11,10 @@ function Home() {
         Welcome to the ProPenalty.com!
       </Typography>
       <Typography variant="body1" gutterBottom>
+        When a professional sports player is fined, I have always been interested in what that same fine
+        would mean to me. If Lebron James is fined $10k, what is that equivalent to for me?
+      </Typography>
+      <Typography sx={{mt: 3}} variant="body1" gutterBottom>
         This site allows you to compare professional sports player salaries and fines to your own
         income. Get started by selecting a league and player and then entering the details.
       </Typography>
