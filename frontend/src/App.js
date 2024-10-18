@@ -44,7 +44,7 @@ function App() {
           </AppBar>
 
           {/* Main content area */}
-          <Box flex="1">
+          <Box flex="1" sx={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 40px)' }}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/player-selection" element={<PlayerSelection />} />
@@ -56,11 +56,12 @@ function App() {
           <Box
             component="footer"
             sx={{
-              py: 3, // Increase padding on top and bottom for websites
+              py: 3, // Increase padding for better spacing
               textAlign: 'center',
               backgroundColor: darkMode ? '#333' : '#f4f4f4',
               color: darkMode ? '#fff' : '#333',
-              paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', // Add 20px padding in addition to the safe area inset
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', // Account for mobile browser UI
+              marginTop: 'auto', // Ensures the footer is always at the bottom
             }}
           >
             <Typography variant="body2" color="textSecondary">
