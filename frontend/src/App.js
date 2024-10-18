@@ -56,10 +56,11 @@ function App() {
           <Box
             component="footer"
             sx={{
-              py: 2,
+              py: 3, // Increase padding on top and bottom for websites
               textAlign: 'center',
               backgroundColor: darkMode ? '#333' : '#f4f4f4',
               color: darkMode ? '#fff' : '#333',
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', // Add 20px padding in addition to the safe area inset
             }}
           >
             <Typography variant="body2" color="textSecondary">
