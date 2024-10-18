@@ -19,6 +19,8 @@ const formatCurrency = (value) => {
 };
 
 function PlayerSelection() {
+  const [leagues] = useState([{ value: 'NBA', label: 'NBA' }, { value: 'NFL', label: 'NFL' }]);
+  const [selectedLeague, setSelectedLeague] = useState('');
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -30,7 +32,8 @@ function PlayerSelection() {
   const [showCharts, setShowCharts] = useState(false); // State for toggling charts visibility
   const navigate = useNavigate();
 
-  const teamNameMapping = {
+  // Team name mappings for NBA and NFL teams
+  const nbaTeams = {
     'ATL': 'Atlanta Hawks',
     'BOS': 'Boston Celtics',
     'BRK': 'Brooklyn Nets',
@@ -63,18 +66,60 @@ function PlayerSelection() {
     'WAS': 'Washington Wizards'
   };
 
+  const nflTeams = {
+    'ARI': 'Arizona Cardinals',
+    'ATL': 'Atlanta Falcons',
+    'BAL': 'Baltimore Ravens',
+    'BUF': 'Buffalo Bills',
+    'CAR': 'Carolina Panthers',
+    'CHI': 'Chicago Bears',
+    'CIN': 'Cincinnati Bengals',
+    'CLE': 'Cleveland Browns',
+    'DAL': 'Dallas Cowboys',
+    'DEN': 'Denver Broncos',
+    'DET': 'Detroit Lions',
+    'GB': 'Green Bay Packers',
+    'HOU': 'Houston Texans',
+    'IND': 'Indianapolis Colts',
+    'JAX': 'Jacksonville Jaguars',
+    'KC': 'Kansas City Chiefs',
+    'LV': 'Las Vegas Raiders',
+    'LAC': 'Los Angeles Chargers',
+    'LAR': 'Los Angeles Rams',
+    'MIA': 'Miami Dolphins',
+    'MIN': 'Minnesota Vikings',
+    'NE': 'New England Patriots',
+    'NO': 'New Orleans Saints',
+    'NYG': 'New York Giants',
+    'NYJ': 'New York Jets',
+    'PHI': 'Philadelphia Eagles',
+    'PIT': 'Pittsburgh Steelers',
+    'SEA': 'Seattle Seahawks',
+    'SF': 'San Francisco 49ers',
+    'TB': 'Tampa Bay Buccaneers',
+    'TEN': 'Tennessee Titans',
+    'WAS': 'Washington Commanders'
+  };
+
   const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+  // Fetch teams based on selected league
   useEffect(() => {
-    axios.get(`${API_URL}/api/teams`).then((response) => {
-      setTeams(response.data);
-    });
-  }, [API_URL]);
+    if (selectedLeague) {
+      axios.get(`${API_URL}/api/teams?league=${selectedLeague}`).then((response) => {
+        setTeams(response.data);
+        setSelectedTeam(''); // Reset team when league changes
+        setPlayers([]); // Reset players when league changes
+      });
+    }
+  }, [selectedLeague, API_URL]);
 
+  // Fetch players based on selected team
   const handleTeamChange = (event) => {
     setSelectedTeam(event.target.value);
     axios.get(`${API_URL}/api/players/${event.target.value}`).then((response) => {
-      setPlayers(response.data);
+      const filteredPlayers = response.data.filter(player => player.league === selectedLeague);
+      setPlayers(filteredPlayers); // Only show players from the selected league
     });
   };
 
@@ -118,7 +163,7 @@ function PlayerSelection() {
           'Net Income', 
           'Federal Tax', 
           'State Tax', 
-          'NBA Escrow', 
+          'Escrow', 
           'Agent Fee', 
           'Jock Tax', 
           'FICA Medicare'
@@ -129,7 +174,7 @@ function PlayerSelection() {
             deductions['Net Income'] - cleanedFine,
             deductions['Federal'],
             deductions['State'],
-            deductions['NBAEscrow'],
+            deductions['Escrow'],
             deductions['AgentFee'],
             deductions['JockTax'],
             deductions['FICAMedicare'],
@@ -162,24 +207,43 @@ function PlayerSelection() {
     });
   };
 
+  // Filter teams based on selected league
+  const filteredTeams = selectedLeague === 'NBA' ? Object.keys(nbaTeams) : Object.keys(nflTeams);
+
   return (
     <>
       <Container maxWidth="sm" sx={{ mt: 10 }}>
         <Typography variant="h4" gutterBottom>
-          Select NBA Player
+          Select Player
         </Typography>
 
+        {/* League Selection */}
         <FormControl fullWidth sx={{ mb: 4 }}>
-          <InputLabel>Select Team</InputLabel>
-          <Select value={selectedTeam} onChange={handleTeamChange}>
-            {teams.map((teamAbbr) => (
-              <MenuItem key={teamAbbr} value={teamAbbr}>
-                {teamNameMapping[teamAbbr] || teamAbbr}  {/* Display full name or fallback to the abbreviation */}
+          <InputLabel>Select League</InputLabel>
+          <Select value={selectedLeague} onChange={(e) => setSelectedLeague(e.target.value)}>
+            {leagues.map((league) => (
+              <MenuItem key={league.value} value={league.value}>
+                {league.label}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
+        {/* Team Selection */}
+        {selectedLeague && (
+          <FormControl fullWidth sx={{ mb: 4 }}>
+            <InputLabel>Select Team</InputLabel>
+            <Select value={selectedTeam} onChange={handleTeamChange}>
+              {filteredTeams.map((teamAbbr) => (
+                <MenuItem key={teamAbbr} value={teamAbbr}>
+                  {selectedLeague === 'NBA' ? nbaTeams[teamAbbr] : nflTeams[teamAbbr]}  {/* Show correct teams based on league */}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+        {/* Player Selection */}
         {selectedTeam && (
           <FormControl fullWidth sx={{ mb: 4 }}>
             <InputLabel>Select Player</InputLabel>
@@ -193,6 +257,7 @@ function PlayerSelection() {
           </FormControl>
         )}
 
+        {/* Fine Input */}
         {selectedPlayer && (
           <>
             <Typography variant="h6" gutterBottom>
@@ -231,6 +296,7 @@ function PlayerSelection() {
           </>
         )}
 
+        {/* Breakdown Card */}
         {breakdown && (
           <Box mt={3}>
             <Card>
@@ -250,7 +316,7 @@ function PlayerSelection() {
                       <strong style={{ color: '#FF0000' }}>State Tax:</strong> {formatCurrency(breakdown.deductions.State)}
                     </Typography>
                     <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>NBA Escrow:</strong> {formatCurrency(breakdown.deductions.NBAEscrow)}
+                      <strong style={{ color: '#FF0000' }}>Escrow:</strong> {formatCurrency(breakdown.deductions.Escrow)}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
@@ -279,6 +345,8 @@ function PlayerSelection() {
           </Box>
         )}
       </Container>
+
+      {/* Charts toggle button */}
       {breakdown && (
         <Box textAlign="center" mt={4} sx={{mb: 4}}>
           <Button variant="contained" color="success" onClick={() => setShowCharts(!showCharts)}>
@@ -287,7 +355,7 @@ function PlayerSelection() {
         </Box>
       )}
 
-      {/* Display charts outside of the container and side by side */}
+      {/* Display charts */}
       {showCharts && (
         <Box sx={{ maxWidth: '1080px', width: '100%', margin: 'auto', mt: 4, mb: 4 }}>
           <Grid container spacing={4} justifyContent="center">

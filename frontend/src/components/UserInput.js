@@ -255,7 +255,7 @@ function UserInput() {
       </Box>
 
       {breakdown && (
-        <Card variant="outlined" sx={{ mt: 4 }}>
+        <Card variant="outlined" sx={{ mt: 4, mb: 4 }}>
           <CardContent>
             <Typography variant="h5" gutterBottom>
               Your Salary Breakdown
