@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, IconButton, Switch } from '@mui/material';
+import { AppBar, Toolbar, Box } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
@@ -29,9 +29,15 @@ function App() {
           {/* Modern, sleek header using AppBar and Toolbar */}
           <AppBar position="static" sx={{ background: darkMode ? '#333' : '#FFFFFF' }}>
             <Toolbar>
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                ProPenalty.com
-              </Typography>
+              {/* Logo Image */}
+              <Box sx={{ flexGrow: 1 }}>
+                <img
+                  src={`${process.env.PUBLIC_URL}/ProPenalty_Logo.png`}
+                  alt="ProPenalty Logo"
+                  style={{ height: '40px', cursor: 'pointer' }}
+                  onClick={() => window.location.href = '/'} // Optional: click to go home
+                />
+              </Box>
 
               {/* Dark Mode Toggle */}
               {/* <IconButton sx={{ ml: 1 }} onClick={() => setDarkMode(!darkMode)} color="inherit">
@@ -40,6 +46,7 @@ function App() {
               <Switch checked={darkMode} onChange={() => setDarkMode(!darkMode)} /> */}
             </Toolbar>
           </AppBar>
+
 
           {/* Routing for pages */}
           <Routes>

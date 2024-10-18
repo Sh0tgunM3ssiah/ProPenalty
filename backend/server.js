@@ -119,7 +119,7 @@ function getStateAbbreviation(team) {
 function getTaxRates(team) {
   const taxRates = {
     Federal: 0.37,
-    NBAEscrow: 0.10,
+    Escrow: 0.10,
     AgentFee: 0.03,
     JockTax: 0.02,
     FICAMedicare: 0.0145,

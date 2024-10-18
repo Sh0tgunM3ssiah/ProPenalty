@@ -125,7 +125,7 @@ function PlayerSelection() {
 
   const handlePlayerChange = (event) => {
     const player = players.find((p) => p.name === event.target.value);
-    setSelectedPlayer(player);
+    setSelectedPlayer(player || null); // If no player selected, set to null
   };
 
   const handleFineChange = (event) => {
@@ -288,7 +288,7 @@ function PlayerSelection() {
                 variant="contained" 
                 color="secondary" 
                 onClick={handleCompare} 
-                disabled={!fine || fine === '$0.00' || isNaN(parseFloat(fine.replace(/[^0-9.]/g, '')))}
+                disabled={!fine || fine === '$0.00' || isNaN(parseFloat(fine.replace(/[^0-9.]/g, ''))) || !selectedPlayer}
               >
                 Compare
               </Button>
