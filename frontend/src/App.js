@@ -26,7 +26,14 @@ function App() {
         <Box
           display="flex"
           flexDirection="column"
-          minHeight="100vh" // Ensure the app takes up at least the full height of the viewport
+          minHeight="100vh"
+          sx={{
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', // Add padding for safe areas and navigation bar
+            minHeight: '100vh', // Ensure the app takes up at least the full height of the viewport
+            '@media (max-height: 800px)': {
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 40px)', // More padding for shorter screens
+            },
+          }}
         >
           {/* Header */}
           <AppBar position="static" sx={{ background: darkMode ? '#333' : '#FFFFFF' }}>
@@ -44,7 +51,7 @@ function App() {
           </AppBar>
 
           {/* Main content area */}
-          <Box flex="1" sx={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 40px)' }}>
+          <Box flex="1">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/player-selection" element={<PlayerSelection />} />
@@ -56,12 +63,12 @@ function App() {
           <Box
             component="footer"
             sx={{
-              py: 3, // Increase padding for better spacing
+              py: 3,
               textAlign: 'center',
               backgroundColor: darkMode ? '#333' : '#f4f4f4',
               color: darkMode ? '#fff' : '#333',
-              paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', // Account for mobile browser UI
-              marginTop: 'auto', // Ensures the footer is always at the bottom
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', // Ensure safe area for the footer
+              minHeight: 'auto',
             }}
           >
             <Typography variant="body2" color="textSecondary">
