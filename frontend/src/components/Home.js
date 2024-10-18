@@ -11,7 +11,7 @@ function Home() {
         Welcome to the ProPenalty.com!
       </Typography>
       <Typography variant="body1" gutterBottom>
-        This app allows you to compare professional sports player salaries and fines to your own
+        This site allows you to compare professional sports player salaries and fines to your own
         income. Get started by selecting a league and player and then entering the details.
       </Typography>
       <Box mt={4}>

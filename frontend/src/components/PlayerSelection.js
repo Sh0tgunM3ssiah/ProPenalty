@@ -19,7 +19,13 @@ const formatCurrency = (value) => {
 };
 
 function PlayerSelection() {
-  const [leagues] = useState([{ value: 'NBA', label: 'NBA' }, { value: 'NFL', label: 'NFL' }]);
+  const [leagues] = useState([
+    { value: 'NBA', label: 'NBA' }, 
+    { value: 'NFL', label: 'NFL' }, 
+    { value: 'MLB', label: 'MLB' }, 
+    { value: 'NHL', label: 'NHL' },
+    { value: 'WNBA', label: 'WNBA' } // Add WNBA as an option
+  ]);
   const [selectedLeague, setSelectedLeague] = useState('');
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
@@ -32,7 +38,7 @@ function PlayerSelection() {
   const [showCharts, setShowCharts] = useState(false); // State for toggling charts visibility
   const navigate = useNavigate();
 
-  // Team name mappings for NBA and NFL teams
+  // Team name mappings for NBA, NFL, MLB, and NHL teams
   const nbaTeams = {
     'ATL': 'Atlanta Hawks',
     'BOS': 'Boston Celtics',
@@ -101,6 +107,89 @@ function PlayerSelection() {
     'WAS': 'Washington Commanders'
   };
 
+  const mlbTeams = {
+    'ARI': 'Arizona Diamondbacks',
+    'ATL': 'Atlanta Braves',
+    'BAL': 'Baltimore Orioles',
+    'BOS': 'Boston Red Sox',
+    'CHC': 'Chicago Cubs',
+    'CHW': 'Chicago White Sox',
+    'CIN': 'Cincinnati Reds',
+    'CLE': 'Cleveland Guardians',
+    'COL': 'Colorado Rockies',
+    'DET': 'Detroit Tigers',
+    'HOU': 'Houston Astros',
+    'KC': 'Kansas City Royals',
+    'LAA': 'Los Angeles Angels',
+    'LAD': 'Los Angeles Dodgers',
+    'MIA': 'Miami Marlins',
+    'MIL': 'Milwaukee Brewers',
+    'MIN': 'Minnesota Twins',
+    'NYM': 'New York Mets',
+    'NYY': 'New York Yankees',
+    'OAK': 'Oakland Athletics',
+    'PHI': 'Philadelphia Phillies',
+    'PIT': 'Pittsburgh Pirates',
+    'SD': 'San Diego Padres',
+    'SF': 'San Francisco Giants',
+    'SEA': 'Seattle Mariners',
+    'STL': 'St. Louis Cardinals',
+    'TB': 'Tampa Bay Rays',
+    'TEX': 'Texas Rangers',
+    'TOR': 'Toronto Blue Jays',
+    'WSH': 'Washington Nationals'
+  };
+
+  const nhlTeams = {
+    'ANA': 'Anaheim Ducks',
+    'ARI': 'Arizona Coyotes',
+    'BOS': 'Boston Bruins',
+    'BUF': 'Buffalo Sabres',
+    'CGY': 'Calgary Flames',
+    'CAR': 'Carolina Hurricanes',
+    'CHI': 'Chicago Blackhawks',
+    'COL': 'Colorado Avalanche',
+    'CBJ': 'Columbus Blue Jackets',
+    'DAL': 'Dallas Stars',
+    'DET': 'Detroit Red Wings',
+    'EDM': 'Edmonton Oilers',
+    'FLA': 'Florida Panthers',
+    'LAK': 'Los Angeles Kings',
+    'MIN': 'Minnesota Wild',
+    'MTL': 'Montreal Canadiens',
+    'NSH': 'Nashville Predators',
+    'NJD': 'New Jersey Devils',
+    'NYI': 'New York Islanders',
+    'NYR': 'New York Rangers',
+    'OTT': 'Ottawa Senators',
+    'PHI': 'Philadelphia Flyers',
+    'PIT': 'Pittsburgh Penguins',
+    'SJS': 'San Jose Sharks',
+    'SEA': 'Seattle Kraken',
+    'STL': 'St. Louis Blues',
+    'TBL': 'Tampa Bay Lightning',
+    'TOR': 'Toronto Maple Leafs',
+    'VAN': 'Vancouver Canucks',
+    'VGK': 'Vegas Golden Knights',
+    'WSH': 'Washington Capitals',
+    'WPG': 'Winnipeg Jets'
+  };
+
+  const wnbaTeams = {
+    'ATL': 'Atlanta Dream',
+    'CHI': 'Chicago Sky',
+    'CON': 'Connecticut Sun',
+    'DAL': 'Dallas Wings',
+    'IND': 'Indiana Fever',
+    'LAS': 'Las Vegas Aces',
+    'LVA': 'Los Angeles Sparks',
+    'MIN': 'Minnesota Lynx',
+    'NYL': 'New York Liberty',
+    'PHX': 'Phoenix Mercury',
+    'SEA': 'Seattle Storm',
+    'WAS': 'Washington Mystics'
+  };
+
   const API_URL = process.env.REACT_APP_BACKEND_URL;
 
   // Fetch teams based on selected league
@@ -141,74 +230,105 @@ function PlayerSelection() {
     }
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     const cleanedFine = fine.replace(/[^0-9.]/g, '');  // Clean fine value
-    axios.post(`${API_URL}/api/calculate`, {
+    const response = await axios.post(`${API_URL}/api/calculate`, {
       grossSalary: selectedPlayer.grossSalary,
       fine: parseFloat(cleanedFine),
       team: selectedPlayer.team,
-    }).then((response) => {
-      const { deductions, finePercentage } = response.data;
-
-      // Set breakdown details
-      setBreakdown({
-        grossSalary: selectedPlayer.grossSalary,
-        deductions,
-        finePercentage,
-      });
-
-      // Salary breakdown chart data
-      setChartData({
-        labels: [
-          'Net Income', 
-          'Federal Tax', 
-          'State Tax', 
-          'Escrow', 
-          'Agent Fee', 
-          'Jock Tax', 
-          'FICA Medicare'
-        ],
-        datasets: [{
-          label: 'Salary Breakdown',
-          data: [
-            deductions['Net Income'] - cleanedFine,
-            deductions['Federal'],
-            deductions['State'],
-            deductions['Escrow'],
-            deductions['AgentFee'],
-            deductions['JockTax'],
-            deductions['FICAMedicare'],
-          ],
-          backgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
-          hoverBackgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
-        }],
-      });
-
-      // Fine percentage chart data
-      setFineChartData({
-        labels: ['Fine', 'Remaining Net Income'],
-        datasets: [{
-          label: 'Fine as Percentage of Net Income',
-          data: [parseFloat(cleanedFine), deductions['Net Income'] - parseFloat(cleanedFine)],
-          backgroundColor: ['#FF0000', '#28a745'],  // Fine is deep red, net income is money green
-          hoverBackgroundColor: ['#FF0000', '#28a745'],
-        }],
-      });
     });
-  };
 
-  const handleCompare = () => {
+    const { deductions, finePercentage } = response.data;
+
+    // Set breakdown details
+    setBreakdown({
+      grossSalary: selectedPlayer.grossSalary,
+      deductions,
+      finePercentage,
+    });
+
+    // Salary breakdown chart data
+    setChartData({
+      labels: [
+        'Net Income', 
+        'Federal Tax', 
+        'State Tax', 
+        'Escrow', 
+        'Agent Fee', 
+        'Jock Tax', 
+        'FICA Medicare'
+      ],
+      datasets: [{
+        label: 'Salary Breakdown',
+        data: [
+          deductions['Net Income'] - cleanedFine,
+          deductions['Federal'],
+          deductions['State'],
+          deductions['Escrow'],
+          deductions['AgentFee'],
+          deductions['JockTax'],
+          deductions['FICAMedicare'],
+        ],
+        backgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
+        hoverBackgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
+      }],
+    });
+
+    // Fine percentage chart data
+    setFineChartData({
+      labels: ['Fine', 'Remaining Net Income'],
+      datasets: [{
+        label: 'Fine as Percentage of Net Income',
+        data: [parseFloat(cleanedFine), deductions['Net Income'] - parseFloat(cleanedFine)],
+        backgroundColor: ['#FF0000', '#28a745'],  // Fine is deep red, net income is money green
+        hoverBackgroundColor: ['#FF0000', '#28a745'],
+      }],
+    });
+
+    // Return the deductions and finePercentage for further use
+    return { deductions, finePercentage };
+};
+
+const handleCompare = async () => {
+  // If breakdown doesn't exist, calculate it first
+  if (!breakdown) {
+    const { deductions, finePercentage } = await handleCalculate(); // Ensure calculations happen before navigation
+    navigate('/user-input', {
+      state: {
+        selectedPlayer,
+        finePercentage,
+        fine,  // Passing fine to UserInput
+      },
+    });
+  } else {
+    // If already calculated, navigate immediately
     navigate('/user-input', {
       state: {
         selectedPlayer,
         finePercentage: breakdown.finePercentage,
-        fine: fine,  // Passing fine to UserInput
+        fine,  // Passing fine to UserInput
       },
     });
-  };
+  }
+};
 
   // Filter teams based on selected league
-  const filteredTeams = selectedLeague === 'NBA' ? Object.keys(nbaTeams) : Object.keys(nflTeams);
+  const filteredTeams = (() => {
+    switch (selectedLeague) {
+      case 'NBA':
+        return Object.keys(nbaTeams);
+      case 'NFL':
+        return Object.keys(nflTeams);
+      case 'MLB':
+        return Object.keys(mlbTeams);
+      case 'NHL':
+        return Object.keys(nhlTeams);
+      case 'WNBA':
+        return Object.keys(wnbaTeams);
+      default:
+        return [];
+    }
+  })();
 
   return (
     <>
@@ -236,8 +356,12 @@ function PlayerSelection() {
             <Select value={selectedTeam} onChange={handleTeamChange}>
               {filteredTeams.map((teamAbbr) => (
                 <MenuItem key={teamAbbr} value={teamAbbr}>
-                  {selectedLeague === 'NBA' ? nbaTeams[teamAbbr] : nflTeams[teamAbbr]}  {/* Show correct teams based on league */}
-                </MenuItem>
+                  {selectedLeague === 'NBA' ? nbaTeams[teamAbbr]
+                  : selectedLeague === 'NFL' ? nflTeams[teamAbbr]
+                  : selectedLeague === 'MLB' ? mlbTeams[teamAbbr]
+                  : selectedLeague === 'NHL' ? nhlTeams[teamAbbr]
+                  : wnbaTeams[teamAbbr]} {/* Show correct teams based on league */}
+              </MenuItem>
               ))}
             </Select>
           </FormControl>
