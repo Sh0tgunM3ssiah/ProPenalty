@@ -231,63 +231,77 @@ function PlayerSelection() {
   };
 
   const handleCalculate = async () => {
-    const cleanedFine = fine.replace(/[^0-9.]/g, '');  // Clean fine value
+    const cleanedFine = fine.replace(/[^0-9.]/g, ''); // Clean fine value
     const response = await axios.post(`${API_URL}/api/calculate`, {
       grossSalary: selectedPlayer.grossSalary,
       fine: parseFloat(cleanedFine),
       team: selectedPlayer.team,
+      league: selectedLeague, // Pass the selected league
     });
-
+  
     const { deductions, finePercentage } = response.data;
-
+  
     // Set breakdown details
     setBreakdown({
       grossSalary: selectedPlayer.grossSalary,
       deductions,
       finePercentage,
     });
-
+  
+    // Conditional labels and data for chart
+    const chartLabels = ['Net Income', 'Federal Tax', 'State Tax'];
+    const chartDataValues = [
+      deductions['Net Income'] - cleanedFine,
+      deductions['Federal'],
+      deductions['State'],
+    ];
+  
+    if (deductions['Escrow']) {
+      chartLabels.push('Escrow');
+      chartDataValues.push(deductions['Escrow']);
+    }
+  
+    if (deductions['AgentFee']) {
+      chartLabels.push('Agent Fee');
+      chartDataValues.push(deductions['AgentFee']);
+    }
+  
+    if (deductions['JockTax']) {
+      chartLabels.push('Jock Tax');
+      chartDataValues.push(deductions['JockTax']);
+    }
+  
+    if (deductions['FICAMedicare']) {
+      chartLabels.push('FICA Medicare');
+      chartDataValues.push(deductions['FICAMedicare']);
+    }
+  
     // Salary breakdown chart data
     setChartData({
-      labels: [
-        'Net Income', 
-        'Federal Tax', 
-        'State Tax', 
-        'Escrow', 
-        'Agent Fee', 
-        'Jock Tax', 
-        'FICA Medicare'
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'Salary Breakdown',
+          data: chartDataValues,
+          backgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
+          hoverBackgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
+        },
       ],
-      datasets: [{
-        label: 'Salary Breakdown',
-        data: [
-          deductions['Net Income'] - cleanedFine,
-          deductions['Federal'],
-          deductions['State'],
-          deductions['Escrow'],
-          deductions['AgentFee'],
-          deductions['JockTax'],
-          deductions['FICAMedicare'],
-        ],
-        backgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
-        hoverBackgroundColor: ['#28a745', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#7E57C2', '#36A2EB'],
-      }],
     });
-
+  
     // Fine percentage chart data
     setFineChartData({
       labels: ['Fine', 'Remaining Net Income'],
-      datasets: [{
-        label: 'Fine as Percentage of Net Income',
-        data: [parseFloat(cleanedFine), deductions['Net Income'] - parseFloat(cleanedFine)],
-        backgroundColor: ['#FF0000', '#28a745'],  // Fine is deep red, net income is money green
-        hoverBackgroundColor: ['#FF0000', '#28a745'],
-      }],
+      datasets: [
+        {
+          label: 'Fine as Percentage of Net Income',
+          data: [parseFloat(cleanedFine), deductions['Net Income'] - parseFloat(cleanedFine)],
+          backgroundColor: ['#FF0000', '#28a745'], // Fine is deep red, net income is money green
+          hoverBackgroundColor: ['#FF0000', '#28a745'],
+        },
+      ],
     });
-
-    // Return the deductions and finePercentage for further use
-    return { deductions, finePercentage };
-};
+  };
 
 const handleCompare = async () => {
   // If breakdown doesn't exist, calculate it first
@@ -332,7 +346,7 @@ const handleCompare = async () => {
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ mt: 10 }}>
+      <Container maxWidth="md" sx={{ mt: 10 }}>
         <Typography variant="h4" gutterBottom>
           Select Player
         </Typography>
@@ -423,37 +437,133 @@ const handleCompare = async () => {
         {/* Breakdown Card */}
         {breakdown && (
           <Box mt={3}>
+            <Typography variant="h5" gutterBottom>Breakdown</Typography>
             <Card>
               <CardContent>
-                <Typography variant="h5" gutterBottom>Breakdown</Typography>
                 <Box textAlign="center" mt={3}>
                   <Typography variant="body1" sx={{ mb: 2 }}>
                     <strong style={{ color: '#28a745' }}>Gross Salary:</strong> {formatCurrency(breakdown.grossSalary)}
                   </Typography>
                 </Box>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                <Grid
+                  container
+                  spacing={2}
+                  sx={{
+                    textAlign: {
+                      xs: 'center', // Center align for mobile
+                      sm: 'inherit', // Inherit alignment for larger screens
+                    },
+                  }}
+                >
+                  {/* Federal Tax */}
+                  <Grid
+                    item
+                    xs={12}
+                    sm={6}
+                    sx={{
+                      textAlign: {
+                        xs: 'center', // Center align on mobile
+                        sm: 'right',  // Right align on larger screens
+                      },
+                    }}
+                  >
                     <Typography variant="body1">
                       <strong style={{ color: '#FF0000' }}>Federal Tax:</strong> {formatCurrency(breakdown.deductions.Federal)}
                     </Typography>
+                  </Grid>
+
+                  {/* State Tax */}
+                  <Grid
+                    item
+                    xs={12}
+                    sm={6}
+                    sx={{
+                      textAlign: {
+                        xs: 'center', // Center align on mobile
+                        sm: 'left',   // Left align on larger screens
+                      },
+                    }}
+                  >
                     <Typography variant="body1">
                       <strong style={{ color: '#FF0000' }}>State Tax:</strong> {formatCurrency(breakdown.deductions.State)}
                     </Typography>
-                    <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>Escrow:</strong> {formatCurrency(breakdown.deductions.Escrow)}
-                    </Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>Agent Fee:</strong> {formatCurrency(breakdown.deductions.AgentFee)}
-                    </Typography>
-                    <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>Jock Tax:</strong> {formatCurrency(breakdown.deductions.JockTax)}
-                    </Typography>
-                    <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>FICA Medicare:</strong> {formatCurrency(breakdown.deductions.FICAMedicare)}
-                    </Typography>
-                  </Grid>
+
+                  {/* Escrow */}
+                  {breakdown.deductions.Escrow && (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      sx={{
+                        textAlign: {
+                          xs: 'center',
+                          sm: 'right',
+                        },
+                      }}
+                    >
+                      <Typography variant="body1">
+                        <strong style={{ color: '#FF0000' }}>Escrow (10%):</strong> {formatCurrency(breakdown.deductions.Escrow)}
+                      </Typography>
+                    </Grid>
+                  )}
+
+                  {/* Agent Fee */}
+                  {breakdown.deductions.AgentFee && (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      sx={{
+                        textAlign: {
+                          xs: 'center',
+                          sm: 'left',
+                        },
+                      }}
+                    >
+                      <Typography variant="body1">
+                        <strong style={{ color: '#FF0000' }}>Agent Fee (3%):</strong> {formatCurrency(breakdown.deductions.AgentFee)}
+                      </Typography>
+                    </Grid>
+                  )}
+
+                  {/* Jock Tax */}
+                  {breakdown.deductions.JockTax && (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      sx={{
+                        textAlign: {
+                          xs: 'center',
+                          sm: 'right',
+                        },
+                      }}
+                    >
+                      <Typography variant="body1">
+                        <strong style={{ color: '#FF0000' }}>Jock Tax (2%):</strong> {formatCurrency(breakdown.deductions.JockTax)}
+                      </Typography>
+                    </Grid>
+                  )}
+
+                  {/* FICA Medicare */}
+                  {breakdown.deductions.FICAMedicare && (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      sx={{
+                        textAlign: {
+                          xs: 'center',
+                          sm: 'left',
+                        },
+                      }}
+                    >
+                      <Typography variant="body1">
+                        <strong style={{ color: '#FF0000' }}>FICA Medicare (1.45%):</strong> {formatCurrency(breakdown.deductions.FICAMedicare)}
+                      </Typography>
+                    </Grid>
+                  )}
                 </Grid>
 
                 <Box textAlign="center" mt={3}>
