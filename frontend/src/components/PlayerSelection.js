@@ -241,11 +241,17 @@ function PlayerSelection() {
   
     const { deductions, finePercentage } = response.data;
   
+    // Calculate percentages
+    const federalTaxPercentage = (deductions['Federal'] / selectedPlayer.grossSalary) * 100;
+    const stateTaxPercentage = (deductions['State'] / selectedPlayer.grossSalary) * 100;
+  
     // Set breakdown details
     setBreakdown({
       grossSalary: selectedPlayer.grossSalary,
       deductions,
       finePercentage,
+      federalTaxPercentage, // Add federal tax percentage
+      stateTaxPercentage,   // Add state tax percentage
     });
   
     // Conditional labels and data for chart
@@ -301,7 +307,7 @@ function PlayerSelection() {
         },
       ],
     });
-  };
+  };  
 
 const handleCompare = async () => {
   // If breakdown doesn't exist, calculate it first
@@ -468,29 +474,25 @@ const handleCompare = async () => {
                     }}
                   >
                     <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>Federal Tax:</strong> {formatCurrency(breakdown.deductions.Federal)}
+                    <strong style={{ color: '#FF0000' }}>
+                        Federal Tax ({breakdown.federalTaxPercentage.toFixed(2)}%):
+                      </strong>{' '}
+                      {formatCurrency(breakdown.deductions.Federal)}
                     </Typography>
                   </Grid>
 
                   {/* State Tax */}
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    sx={{
-                      textAlign: {
-                        xs: 'center', // Center align on mobile
-                        sm: 'left',   // Left align on larger screens
-                      },
-                    }}
-                  >
+                  <Grid item xs={12} sm={6}>
                     <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>State Tax:</strong> {formatCurrency(breakdown.deductions.State)}
+                      <strong style={{ color: '#FF0000' }}>
+                        State Tax ({breakdown.stateTaxPercentage.toFixed(2)}%):
+                      </strong>{' '}
+                      {formatCurrency(breakdown.deductions.State)}
                     </Typography>
                   </Grid>
 
-                  {/* Escrow */}
-                  {breakdown.deductions.Escrow && (
+                  {/* Agent Fee */}
+                  {breakdown.deductions.AgentFee && (
                     <Grid
                       item
                       xs={12}
@@ -503,13 +505,13 @@ const handleCompare = async () => {
                       }}
                     >
                       <Typography variant="body1">
-                        <strong style={{ color: '#FF0000' }}>Escrow (10%):</strong> {formatCurrency(breakdown.deductions.Escrow)}
+                        <strong style={{ color: '#FF0000' }}>Agent Fee (3%):</strong> {formatCurrency(breakdown.deductions.AgentFee)}
                       </Typography>
                     </Grid>
                   )}
 
-                  {/* Agent Fee */}
-                  {breakdown.deductions.AgentFee && (
+                  {/* Escrow */}
+                  {breakdown.deductions.Escrow && (
                     <Grid
                       item
                       xs={12}
@@ -522,7 +524,7 @@ const handleCompare = async () => {
                       }}
                     >
                       <Typography variant="body1">
-                        <strong style={{ color: '#FF0000' }}>Agent Fee (3%):</strong> {formatCurrency(breakdown.deductions.AgentFee)}
+                        <strong style={{ color: '#FF0000' }}>Escrow (10%):</strong> {formatCurrency(breakdown.deductions.Escrow)}
                       </Typography>
                     </Grid>
                   )}
