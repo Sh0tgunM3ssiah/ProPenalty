@@ -6,3 +6,5 @@ node_modules/
 
 # Ignore robots.txt
 robots.txt
+/frontend/node_modules/.cache/default-development
+frontend/node_modules/.cache/default-development/0.pack

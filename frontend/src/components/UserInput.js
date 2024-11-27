@@ -12,6 +12,35 @@ const stateNameMapping = {
   'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
 };
 
+const federalTaxBrackets = [
+  { rate: 0.10, limit: 11600 },
+  { rate: 0.12, limit: 47150 },
+  { rate: 0.22, limit: 100525 },
+  { rate: 0.24, limit: 191950 },
+  { rate: 0.32, limit: 243725 },
+  { rate: 0.35, limit: 609350 },
+  { rate: 0.37, limit: Infinity },
+];
+
+function calculateFederalTax(grossSalary) {
+  let remainingSalary = grossSalary;
+  let federalTax = 0;
+
+  for (let i = 0; i < federalTaxBrackets.length; i++) {
+    const bracket = federalTaxBrackets[i];
+    const previousLimit = federalTaxBrackets[i - 1]?.limit || 0;
+    const taxableAmount = Math.min(remainingSalary, bracket.limit - previousLimit);
+    if (taxableAmount <= 0) break;
+
+    federalTax += taxableAmount * bracket.rate;
+    remainingSalary -= taxableAmount;
+
+    if (remainingSalary <= 0) break;
+  }
+
+  return federalTax;
+}
+
 function UserInput() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,17 +146,16 @@ function UserInput() {
     if (Object.keys(errorsFound).length === 0) {
       const grossSalary = calculateGrossSalary(); // Get gross salary based on mode (salary or hourly)
       const stateTaxRate = stateTaxRates[userState] || 0.05; // Use the state-selected tax rate or default 5%
-      const federalTax = grossSalary * 0.37; // 37% federal tax
+      const federalTax = calculateFederalTax(grossSalary); // Use the bracket-based calculation
       const stateTax = grossSalary * stateTaxRate; // State tax
       const netIncome = grossSalary - federalTax - stateTax; // Net income after taxes
-      
-      // Correct fine calculation by removing .toFixed here and applying it later
+      const federalTaxRate = (federalTax / grossSalary) * 100; // Effective federal tax rate
       const calculatedFine = netIncome * (finePercentage / 100); // Fine based on net income
   
-      // Store the fine and breakdown details
       setBreakdown({
         grossSalary,
         federalTax,
+        federalTaxRate,
         stateTax,
         netIncome,
         calculatedFine,
@@ -264,17 +292,23 @@ function UserInput() {
               <strong style={{ color: '#28a745' }}>Gross Salary:</strong> {formatCurrency(breakdown.grossSalary)}
             </Typography>
             <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={6}>
-                    <Typography variant="body1">
-                      <strong style={{ color: '#FF0000' }}>Federal Tax (37%):</strong> {formatCurrency(breakdown.federalTax)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                  <Typography variant="body1">
-                    <strong style={{ color: '#FF0000' }}>State Tax ({(stateTaxRates[userState] * 100).toFixed(2)}%):</strong> {formatCurrency(breakdown.stateTax)}
-                  </Typography>
-                  </Grid>
-                </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">
+                  <strong style={{ color: '#FF0000' }}>
+                    Federal Tax ({breakdown.federalTaxRate.toFixed(2)}%):
+                  </strong>{' '}
+                  {formatCurrency(breakdown.federalTax)}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body1">
+                  <strong style={{ color: '#FF0000' }}>
+                    State Tax ({(stateTaxRates[userState] * 100).toFixed(2)}%):
+                  </strong>{' '}
+                  {formatCurrency(breakdown.stateTax)}
+                </Typography>
+              </Grid>
+            </Grid>
             <Typography variant="body1">
               <strong style={{ color: '#28a745' }}>Net Income:</strong> {formatCurrency(breakdown.netIncome)}
             </Typography>
